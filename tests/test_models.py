@@ -12,6 +12,7 @@ class TestSearchQuery:
         assert q.query == "python"
         assert q.count == 5
         assert q.country is None
+        assert q.summarize is False
 
     def test_full_query(self):
         q = SearchQuery(
@@ -21,10 +22,12 @@ class TestSearchQuery:
             search_lang="en",
             ui_lang="en",
             freshness="pw",
+            summarize=True,
         )
         assert q.count == 3
         assert q.country == "US"
         assert q.freshness == "pw"
+        assert q.summarize is True
 
     def test_count_bounds(self):
         with pytest.raises(ValidationError):
@@ -49,10 +52,18 @@ class TestSearchResponse:
         )
         assert len(resp.web.results) == 1
         assert resp.web.results[0].title == "Test"
+        assert resp.summary is None
 
     def test_empty_results(self):
         resp = SearchResponse(web=SearchResultsWeb(results=[]))
         assert resp.web.results == []
+
+    def test_response_with_summary(self):
+        resp = SearchResponse(
+            web=SearchResultsWeb(results=[]),
+            summary="A summary of results.",
+        )
+        assert resp.summary == "A summary of results."
 
 
 class TestFetchQuery:

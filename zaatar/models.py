@@ -26,6 +26,7 @@ class SearchQuery(BaseModel):
         default=None,
         description='Freshness filter: "pd" (past day), "pw" (past week), "pm" (past month), "py" (past year)',
     )
+    summarize: bool = Field(default=False, description="Summarize results using the configured LLM")
 
 
 class SearchResult(BaseModel):
@@ -46,6 +47,7 @@ class SearchResponse(BaseModel):
     """Top-level search response matching Brave API structure."""
 
     web: SearchResultsWeb
+    summary: str | None = Field(default=None, description="LLM-generated summary of search results")
 
 
 # --- Fetch Models ---

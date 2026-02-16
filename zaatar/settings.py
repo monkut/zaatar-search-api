@@ -13,6 +13,11 @@ MAX_SEARCH_COUNT: int = int(os.getenv("MAX_SEARCH_COUNT", "10"))
 FETCH_TIMEOUT: int = int(os.getenv("FETCH_TIMEOUT", "30"))
 FETCH_MAX_CHARS: int = int(os.getenv("FETCH_MAX_CHARS", "50000"))
 
+# Ollama
+OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "gemma3:4b")
+OLLAMA_TIMEOUT: int = int(os.getenv("OLLAMA_TIMEOUT", "120"))
+
 # Flask
 FLASK_HOST: str = os.getenv("FLASK_HOST", "0.0.0.0")  # noqa: S104
 FLASK_PORT: int = int(os.getenv("FLASK_PORT", "5000"))
