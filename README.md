@@ -8,7 +8,7 @@ Zaatar provides `web_search` and `web_fetch` endpoints with parameter schemas ma
 
 - Python 3.14
 - [uv](https://docs.astral.sh/uv/guides/install-python/) for dependency management
-- Docker & Docker Compose (for SearXNG)
+- Docker & Docker Compose (for SearXNG and Ollama)
 - System packages for lxml (Ubuntu 24.04):
 
 ```bash
@@ -21,12 +21,14 @@ sudo apt install libxml2-dev libxslt-dev
 # 1. Install dependencies
 uv sync
 
-# 2. Start SearXNG
-docker compose up -d searxng
+# 2. Start SearXNG and Ollama
+docker compose up -d
 
-# 3. Start the API
+# 3. Start the API (pulls the Ollama model on first run)
 uv run poe serve
 ```
+
+On first startup, zaatar pulls the configured Ollama model (`gemma3:4b` by default, ~3 GB download). The service blocks until the model is ready.
 
 The API is now running at `http://localhost:5000`.
 
@@ -44,12 +46,17 @@ Search the web via SearXNG.
 | `search_lang` | string | no       |         | ISO language code for results                         |
 | `ui_lang`     | string | no       |         | ISO language code for UI                              |
 | `freshness`   | string | no       |         | `pd` (day), `pw` (week), `pm` (month), `py` (year)   |
+| `summarize`   | bool   | no       | false   | Summarize results using the local Ollama LLM          |
 
 ```bash
+# Basic search
 curl "http://localhost:5000/web_search?query=python&count=3"
+
+# Search with LLM summary
+curl "http://localhost:5000/web_search?query=python&count=3&summarize=true"
 ```
 
-Response:
+Response (without `summarize`):
 
 ```json
 {
@@ -62,6 +69,23 @@ Response:
       }
     ]
   }
+}
+```
+
+Response (with `summarize=true`) includes an additional `summary` field:
+
+```json
+{
+  "web": {
+    "results": [
+      {
+        "title": "Welcome to Python.org",
+        "url": "https://www.python.org/",
+        "description": "The official home of the Python Programming Language."
+      }
+    ]
+  },
+  "summary": "Python is a versatile programming language. The official site [python.org](https://www.python.org/) provides documentation, downloads, and community resources."
 }
 ```
 
@@ -111,8 +135,8 @@ OpenClaw's built-in `web_search` tool supports Brave and Perplexity. Since it do
 Run zaatar on the same machine as OpenClaw (or a reachable host):
 
 ```bash
-# Start SearXNG + API
-docker compose up -d searxng
+# Start SearXNG + Ollama, then the API
+docker compose up -d
 FLASK_HOST=127.0.0.1 FLASK_PORT=5000 uv run poe serve
 ```
 
@@ -203,18 +227,21 @@ Add to `~/.openclaw/openclaw.json`:
 
 ## Environment Variables
 
-| Variable              | Default                | Description                          |
-|-----------------------|------------------------|--------------------------------------|
-| `SEARXNG_BASE_URL`    | `http://localhost:8080` | SearXNG instance URL                |
-| `SEARXNG_ENGINES`     | `""` (all)             | Comma-separated engine filter        |
-| `SEARXNG_SAFESEARCH`  | `0`                    | SafeSearch level (0/1/2)             |
-| `DEFAULT_SEARCH_COUNT`| `5`                    | Default result count                 |
-| `MAX_SEARCH_COUNT`    | `10`                   | Maximum results cap                  |
-| `FETCH_TIMEOUT`       | `30`                   | HTTP fetch timeout (seconds)         |
-| `FETCH_MAX_CHARS`     | `50000`                | Default max content chars            |
-| `FLASK_HOST`          | `0.0.0.0`              | API bind host                        |
-| `FLASK_PORT`          | `5000`                 | API bind port                        |
-| `LOG_LEVEL`           | `DEBUG`                | Logging level                        |
+| Variable              | Default                  | Description                          |
+|-----------------------|--------------------------|--------------------------------------|
+| `SEARXNG_BASE_URL`    | `http://localhost:8080`  | SearXNG instance URL                |
+| `SEARXNG_ENGINES`     | `""` (all)               | Comma-separated engine filter        |
+| `SEARXNG_SAFESEARCH`  | `0`                      | SafeSearch level (0/1/2)             |
+| `DEFAULT_SEARCH_COUNT`| `5`                      | Default result count                 |
+| `MAX_SEARCH_COUNT`    | `10`                     | Maximum results cap                  |
+| `FETCH_TIMEOUT`       | `30`                     | HTTP fetch timeout (seconds)         |
+| `FETCH_MAX_CHARS`     | `50000`                  | Default max content chars            |
+| `OLLAMA_BASE_URL`     | `http://localhost:11434` | Ollama instance URL                  |
+| `OLLAMA_MODEL`        | `gemma3:4b`              | Model for summarization              |
+| `OLLAMA_TIMEOUT`      | `120`                    | Ollama request timeout (seconds)     |
+| `FLASK_HOST`          | `0.0.0.0`               | API bind host                        |
+| `FLASK_PORT`          | `5000`                   | API bind port                        |
+| `LOG_LEVEL`           | `DEBUG`                  | Logging level                        |
 
 ## Development
 
@@ -248,6 +275,7 @@ zaatar/
     clients/
         searxng.py       # SearXNG HTTP client
         fetcher.py       # URL fetch + readability extraction
+        ollama.py        # Ollama LLM client for summarization
     routes/
         search.py        # GET /web_search
         fetch.py         # GET /web_fetch
