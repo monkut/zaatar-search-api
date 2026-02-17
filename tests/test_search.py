@@ -17,7 +17,7 @@ class TestWebSearchEndpoint:
                 ]
             )
         )
-        response = client.get("/web_search?query=test")
+        response = client.get("/web_search?query=test&summarize=false")
         assert response.status_code == 200
         data = response.get_json()
         assert "web" in data
@@ -71,7 +71,7 @@ class TestWebSearchSummarization:
                 ]
             )
         )
-        response = client.get("/web_search?query=test")
+        response = client.get("/web_search?query=test&summarize=false")
         assert response.status_code == 200
         mock_summarize.assert_not_called()
 

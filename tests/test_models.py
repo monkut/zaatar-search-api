@@ -12,7 +12,7 @@ class TestSearchQuery:
         assert q.query == "python"
         assert q.count == 5
         assert q.country is None
-        assert q.summarize is False
+        assert q.summarize is True
 
     def test_full_query(self):
         q = SearchQuery(

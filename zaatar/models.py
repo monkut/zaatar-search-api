@@ -26,7 +26,7 @@ class SearchQuery(BaseModel):
         default=None,
         description='Freshness filter: "pd" (past day), "pw" (past week), "pm" (past month), "py" (past year)',
     )
-    summarize: bool = Field(default=False, description="Summarize results using the configured LLM")
+    summarize: bool = Field(default=True, description="Summarize results using the configured LLM")
 
 
 class SearchResult(BaseModel):
